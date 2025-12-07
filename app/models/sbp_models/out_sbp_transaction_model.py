@@ -1,4 +1,4 @@
-# МОДЕЛИ ДАННЫХ (PayOut | Карта)
+# МОДЕЛИ ДАННЫХ (PayOut | СБП)
 import re
 from datetime import datetime
 
@@ -8,11 +8,12 @@ from decimal import Decimal, InvalidOperation  # Точный десятичны
 from app.api.resources.valid_res import valid_res
 
 
-class OutCardTransactionRequest(BaseModel):
+class OutSbpTransactionRequest(BaseModel):
     # Обязательные поля
     amount: str = Field(..., min_length=1, description="Сумма заявки")
     currency: str = Field(..., min_length=1, description="ISO код валюты")
-    card_number: str = Field(..., min_length=13, max_length=19, description="Номер карты")
+    phone_number: str = Field(..., min_length=1, description="Номер телефона")
+    bank_id: str = Field(..., min_length=1, description="Номер банка")
     owner_name: str = Field(..., min_length=1, description="ФИО владельца карты")
     merchant_transaction_id: str = Field(..., min_length=1, description="Идентификатор платежа")
 
@@ -21,7 +22,7 @@ class OutCardTransactionRequest(BaseModel):
     def validate_amount(csl, value: str) -> str:
         try:
             amount = Decimal(value)
-            if not re.match(r"^\d+$", value.strip()):
+            if not re.match(r"^\d+$", value):
                 raise ValueError("Поле amount должно быть целым числом")
             if amount <= 0:
                 raise ValueError("Поле amount должно быть положительным числом")
@@ -38,7 +39,6 @@ class OutCardTransactionRequest(BaseModel):
             return value
         raise ValueError("Неправильный формат поля currency")
 
-
     @field_validator("owner_name") # Валидация поля owner_name
     @classmethod
     def validate_owner_name(csl, value: str) -> str:
@@ -47,8 +47,24 @@ class OutCardTransactionRequest(BaseModel):
             return value
         raise ValueError("Неправильный формат поля owner_name")
 
+    @field_validator("phone_number")  # Валидация поля phone_number
+    @classmethod
+    def validate_phone_number(csl, value: str) -> str:
+        if re.match(r"^\d+$", value) and len(value) > 10:
+            return value
+        raise ValueError("Неправильный формат поля phone_number")
 
-class OutCardTransactionResponse(BaseModel):
+    @field_validator("bank_id") # Валидация поля bank_id
+    @classmethod
+    def validate_bank_id(csl, value: str) -> str:
+        if re.match(r"^\d+$", value):
+            if value in valid_res.valid_bank_numbers:
+                return value
+            raise ValueError("Неверное значение поля bank_id")
+        raise ValueError("Поле bank_id должно содержать только номер")
+
+
+class OutSbpTransactionResponse(BaseModel):
     id: int  # Идентификатор платежа в системе провайдера
     merchant_transaction_id: str  # Идентификатор платежа в системе мерчанта
     expires_at: datetime  # Срок действия платежа

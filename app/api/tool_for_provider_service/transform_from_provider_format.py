@@ -10,7 +10,7 @@ from app.models.qr_and_sim_models.in_qr_transaction_model import InQrTransaction
 from app.models.qr_and_sim_models.in_sim_transaction_model import InSimTransactionResponse
 from app.models.sbp_models.in_sbp_transaction_model import InSbpTransactionResponse
 from app.models.sbp_models.in_sbp_transaction_model_iternal import InInternalSbpTransactionResponse
-
+from app.models.sbp_models.out_sbp_transaction_model import OutSbpTransactionResponse
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +188,25 @@ def transform_from_provider_format_info_in(provider_response: Dict[str, Any]) ->
 def transform_from_provider_format_card_out(provider_response: Dict[str, Any]) -> OutCardTransactionResponse:
     try:
         return OutCardTransactionResponse(
+            id=provider_response["id"],
+            merchant_transaction_id=provider_response["merchant_transaction_id"],
+            expires_at=provider_response["expires_at"],
+            amount=provider_response["amount"],
+            currency=provider_response["currency"],
+            currency_rate=provider_response["currency_rate"],
+            amount_in_usd=provider_response["amount_in_usd"],
+            rate=provider_response["rate"],
+            commission=provider_response["commission"]
+        )
+    except KeyError as e:
+        logger.error(f"Отсутствует ожидаемое поле в ответе провайдера: {e}")
+        raise ValueError(f"Неверный формат ответа провайдера: Отсутствует поле {e}")
+
+
+# Преобразование формата провайдера (PayOut | СБП)
+def transform_from_provider_format_spb_out(provider_response: Dict[str, Any]) -> OutSbpTransactionResponse:
+    try:
+        return OutSbpTransactionResponse(
             id=provider_response["id"],
             merchant_transaction_id=provider_response["merchant_transaction_id"],
             expires_at=provider_response["expires_at"],

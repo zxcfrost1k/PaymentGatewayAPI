@@ -12,12 +12,12 @@ from app.api.tool_for_provider_service.transform_from_provider_format import (
     transform_from_provider_format_qr_in,
     transform_from_provider_format_sim_in,
     transform_from_provider_format_info_in,
-    transform_from_provider_format_card_out
+    transform_from_provider_format_card_out, transform_from_provider_format_spb_out
 )
 from app.api.tool_for_provider_service.transform_to_provider_format import (
     transform_to_provider_format_card_in,
     transform_to_provider_format_card_internal_in,
-    transform_to_provider_format_card_out
+    transform_to_provider_format_card_out, transform_to_provider_format_sbp_out
 )
 from app.models.card_models.in_card_transaction_internal_bank_model import (
     InInternalCardTransactionRequest,
@@ -37,7 +37,7 @@ from app.models.sbp_models.in_sbp_transaction_model import InSbpTransactionRespo
 from app.models.sbp_models.in_sbp_transaction_model_iternal import InInternalSbpTransactionResponse
 from app.models.other_models import InfoTransactionResponse
 from app.core.config import settings
-
+from app.models.sbp_models.out_sbp_transaction_model import OutSbpTransactionRequest, OutSbpTransactionResponse
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +175,7 @@ class ProviderService:
 
             logger.info(f"Отправка запроса провайдеру на создание карточной транзакции: {provider_payload}")
             response = await self.client.post(
-                f"{settings.provider_base_url}/transactions/card",
+                f"{settings.provider_base_url}/api/v1/transactions/card",
                 headers=headers,
                 json=provider_payload
             )
@@ -203,7 +203,7 @@ class ProviderService:
 
             logger.info(f"Отправка запроса провайдеру на создание внутренней карточной транзакции: {provider_payload}")
             response = await self.client.post(
-                f"{settings.provider_base_url}/transactions/card",
+                f"{settings.provider_base_url}/api/v1/transactions/internal-card",
                 headers=headers,
                 json=provider_payload
             )
@@ -231,7 +231,7 @@ class ProviderService:
             logger.info(
                 f"Отправка запроса провайдеру на создание трансграничной карточной транзакции: {provider_payload}")
             response = await self.client.post(
-                f"{settings.provider_base_url}/transactions/card",
+                f"{settings.provider_base_url}/api/v1/transactions/transgran-card",
                 headers=headers,
                 json=provider_payload
             )
@@ -247,7 +247,7 @@ class ProviderService:
             raise transform_provider_error(e)
 
     # PayIn | СБП
-    async def create_spb_transaction_in(self,
+    async def create_sbp_transaction_in(self,
                                         request: InCardTransactionRequest) -> InSbpTransactionResponse:
         try:
             provider_payload = transform_to_provider_format_card_in(request)
@@ -258,7 +258,7 @@ class ProviderService:
 
             logger.info(f"Отправка запроса провайдеру на создание СБП транзакции: {provider_payload}")
             response = await self.client.post(
-                f"{settings.provider_base_url}/transactions/card",
+                f"{settings.provider_base_url}/transactions/sbp",
                 headers=headers,
                 json=provider_payload
             )
@@ -274,7 +274,7 @@ class ProviderService:
             raise transform_provider_error(e)
 
     # PayIn | СБП (внутрибанк)
-    async def create_spb_transaction_internal_in(self,
+    async def create_sbp_transaction_internal_in(self,
                                                  request: InInternalCardTransactionRequest) ->(
             InInternalSbpTransactionResponse):
         try:
@@ -286,7 +286,7 @@ class ProviderService:
 
             logger.info(f"Отправка запроса провайдеру на создание внутренней СБП транзакции: {provider_payload}")
             response = await self.client.post(
-                f"{settings.provider_base_url}/transactions/card",
+                f"{settings.provider_base_url}transactions/internal-sbp",
                 headers=headers,
                 json=provider_payload
             )
@@ -302,7 +302,7 @@ class ProviderService:
             raise transform_provider_error(e)
 
     # PayIn | СБП (трансгран)
-    async def create_spb_transaction_transgran_in(self,
+    async def create_sbp_transaction_transgran_in(self,
                                                   request: InCardTransactionRequest) -> InInternalSbpTransactionResponse:
         try:
             provider_payload = transform_to_provider_format_card_in(request)
@@ -313,7 +313,7 @@ class ProviderService:
 
             logger.info(f"Отправка запроса провайдеру на создание трансграничной СБП транзакции: {provider_payload}")
             response = await self.client.post(
-                f"{settings.provider_base_url}/transactions/card",
+                f"{settings.provider_base_url}/api/v1/transactions/transgran-sbp",
                 headers=headers,
                 json=provider_payload
             )
@@ -340,7 +340,7 @@ class ProviderService:
 
             logger.info(f"Отправка запроса провайдеру на создание QR транзакции: {provider_payload}")
             response = await self.client.post(
-                f"{settings.provider_base_url}/transactions/card",
+                f"{settings.provider_base_url}/api/v1/transactions/qr",
                 headers=headers,
                 json=provider_payload
             )
@@ -367,7 +367,7 @@ class ProviderService:
 
             logger.info(f"Отправка запроса провайдеру на создание SIM транзакции: {provider_payload}")
             response = await self.client.post(
-                f"{settings.provider_base_url}/transactions/card",
+                f"{settings.provider_base_url}/api/v1/transactions/sim",
                 headers=headers,
                 json=provider_payload
             )
@@ -392,7 +392,7 @@ class ProviderService:
 
             logger.info(f"Отправка запроса на отмену транзакции {transaction_id}")
             response = await self.client.post(
-                f"{settings.provider_base_url}/transactions/{transaction_id}/cancel",
+                f"{settings.provider_base_url}/api/v1/transactions/{transaction_id}/cancel",
                 headers=headers
             )
 
@@ -438,7 +438,7 @@ class ProviderService:
 
             logger.info(f"Запрос информации о транзакции {transaction_id}")
             response = await self.client.get(
-                f"{settings.provider_base_url}/transactions/{transaction_id}",
+                f"{settings.provider_base_url}/api/v1/transactions/{transaction_id}",
                 headers=headers
             )
 
@@ -472,7 +472,7 @@ class ProviderService:
 
             logger.info(f"Отправка запроса провайдеру на создание вывода на карту: {provider_payload}")
             response = await self.client.post(
-                f"{settings.provider_base_url}/transactions/card",
+                f"{settings.provider_base_url}/api/v1/transactions/payout-card",
                 headers=headers,
                 json=provider_payload
             )
@@ -485,6 +485,32 @@ class ProviderService:
 
         except Exception as e:
             logger.error(f"Ошибка при создании вывода на карту: {str(e)}")
+            raise transform_provider_error(e)
+
+    # PayOut | СБП
+    async def create_sbp_transaction_out(self, request: OutSbpTransactionRequest) -> OutSbpTransactionResponse:
+        try:
+            provider_payload = transform_to_provider_format_sbp_out(request)
+            headers = {
+                "Authorization": f"Bearer {settings.provider_api_key}",
+                "Content-Type": "application/json"
+            }
+
+            logger.info(f"Отправка запроса провайдеру на создание вывода на карту по СБП: {provider_payload}")
+            response = await self.client.post(
+                f"{settings.provider_base_url}/api/v1/transactions/payout-sbp",
+                headers=headers,
+                json=provider_payload
+            )
+
+            response.raise_for_status()
+            provider_data = response.json()
+            logger.info(f"Получен ответ от провайдера на создание вывода на карту по СБП: {provider_data}")
+
+            return transform_from_provider_format_spb_out(provider_data)
+
+        except Exception as e:
+            logger.error(f"Ошибка при создании вывода на карту по СБП: {str(e)}")
             raise transform_provider_error(e)
 
     # Выход из приложения

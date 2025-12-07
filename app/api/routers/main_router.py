@@ -9,5 +9,5 @@ from app.main import app
 main_router = APIRouter()
 
 # Подключение остальных роутеров
-app.include_router(cancel_router, prefix="/transactions", tags=["transactions"])
-app.include_router(webhook_router, prefix="/api/v1", tags=["webhooks"])
+app.include_router(cancel_router, prefix="/api/v1/transactions", tags=["transactions"])
+app.include_router(webhook_router, prefix="/api/v1/transactions/", tags=["webhooks"])
