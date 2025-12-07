@@ -2,22 +2,23 @@
 from typing import Dict, Any
 import logging
 
+from app.models.card_models.out_card_transaction_model import OutCardTransactionResponse
 from app.models.other_models import InfoTransactionResponse
-from app.models.card_models.card_transaction_internal_bank_model import InternalCardTransactionResponse
-from app.models.card_models.card_transaction_model import CardTransactionResponse
-from app.models.qr_and_sim_models.qr_transaction_model import QrTransactionResponse
-from app.models.qr_and_sim_models.sim_transaction_model import SimTransactionResponse
-from app.models.sbp_models.sbp_transaction_model import SbpTransactionResponse
-from app.models.sbp_models.sbp_transaction_model_iternal import InternalSbpTransactionResponse
+from app.models.card_models.in_card_transaction_internal_bank_model import InInternalCardTransactionResponse
+from app.models.card_models.in_card_transaction_model import InCardTransactionResponse
+from app.models.qr_and_sim_models.in_qr_transaction_model import InQrTransactionResponse
+from app.models.qr_and_sim_models.in_sim_transaction_model import InSimTransactionResponse
+from app.models.sbp_models.in_sbp_transaction_model import InSbpTransactionResponse
+from app.models.sbp_models.in_sbp_transaction_model_iternal import InInternalSbpTransactionResponse
 
 
 logger = logging.getLogger(__name__)
 
 
 # Преобразование формата провайдера (PayIn | Карта)
-def transform_from_provider_format_card(provider_response: Dict[str, Any]) -> CardTransactionResponse:
+def transform_from_provider_format_card_in(provider_response: Dict[str, Any]) -> InCardTransactionResponse:
     try:
-        return CardTransactionResponse(
+        return InCardTransactionResponse(
             id=provider_response["id"],
             merchant_transaction_id=provider_response["merchant_transaction_id"],
             expires_at=provider_response["expires_at"],
@@ -40,9 +41,9 @@ def transform_from_provider_format_card(provider_response: Dict[str, Any]) -> Ca
 
 
 # Преобразование формата провайдера (PayIn | Карта (внутрибанк))
-def transform_from_provider_format_card_internal(provider_response: Dict[str, Any]) -> InternalCardTransactionResponse:
+def transform_from_provider_format_card_internal_in(provider_response: Dict[str, Any]) -> InInternalCardTransactionResponse:
     try:
-        return InternalCardTransactionResponse(
+        return InInternalCardTransactionResponse(
             id=provider_response["id"],
             merchant_transaction_id=provider_response["merchant_transaction_id"],
             expires_at=provider_response["expires_at"],
@@ -63,9 +64,9 @@ def transform_from_provider_format_card_internal(provider_response: Dict[str, An
 
 
 # Преобразование формата провайдера (PayIn | СБП)
-def transform_from_provider_format_sbp(provider_response: Dict[str, Any]) -> SbpTransactionResponse:
+def transform_from_provider_format_sbp_in(provider_response: Dict[str, Any]) -> InSbpTransactionResponse:
     try:
-        return SbpTransactionResponse(
+        return InSbpTransactionResponse(
             id=provider_response["id"],
             merchant_transaction_id=provider_response["merchant_transaction_id"],
             expires_at=provider_response["expires_at"],
@@ -88,9 +89,9 @@ def transform_from_provider_format_sbp(provider_response: Dict[str, Any]) -> Sbp
 
 
 # Преобразование формата провайдера (PayIn | СБП (внутрибанк))
-def transform_from_provider_format_sbp_internal(provider_response: Dict[str, Any]) -> InternalSbpTransactionResponse:
+def transform_from_provider_format_sbp_internal_in(provider_response: Dict[str, Any]) -> InInternalSbpTransactionResponse:
     try:
-        return InternalSbpTransactionResponse(
+        return InInternalSbpTransactionResponse(
             id=provider_response["id"],
             merchant_transaction_id=provider_response["merchant_transaction_id"],
             expires_at=provider_response["expires_at"],
@@ -112,9 +113,9 @@ def transform_from_provider_format_sbp_internal(provider_response: Dict[str, Any
 
 
 # Преобразование формата провайдера (PayIn | QR НСПК)
-def transform_from_provider_format_qr(provider_response: Dict[str, Any]) -> QrTransactionResponse:
+def transform_from_provider_format_qr_in(provider_response: Dict[str, Any]) -> InQrTransactionResponse:
     try:
-        return QrTransactionResponse(
+        return InQrTransactionResponse(
             id=provider_response["id"],
             merchant_transaction_id=provider_response["merchant_transaction_id"],
             expires_at=provider_response["expires_at"],
@@ -132,9 +133,9 @@ def transform_from_provider_format_qr(provider_response: Dict[str, Any]) -> QrTr
 
 
 # Преобразование формата провайдера (PayIn | СИМ-карта)
-def transform_from_provider_format_sim(provider_response: Dict[str, Any]) -> SimTransactionResponse:
+def transform_from_provider_format_sim_in(provider_response: Dict[str, Any]) -> InSimTransactionResponse:
     try:
-        return SimTransactionResponse(
+        return InSimTransactionResponse(
             id=provider_response["id"],
             merchant_transaction_id=provider_response["merchant_transaction_id"],
             expires_at=provider_response["expires_at"],
@@ -154,7 +155,7 @@ def transform_from_provider_format_sim(provider_response: Dict[str, Any]) -> Sim
 
 
 # Преобразование формата провайдера (Информация о платеже)
-def transform_from_provider_format_info(provider_response: Dict[str, Any]) -> InfoTransactionResponse:
+def transform_from_provider_format_info_in(provider_response: Dict[str, Any]) -> InfoTransactionResponse:
     try:
         return InfoTransactionResponse(
             id=provider_response["id"],
@@ -177,6 +178,25 @@ def transform_from_provider_format_info(provider_response: Dict[str, Any]) -> In
             phone_number=provider_response["phone_number"],
             owner_name=provider_response["owner_name"],
             bank_name=provider_response["bank_name"]
+        )
+    except KeyError as e:
+        logger.error(f"Отсутствует ожидаемое поле в ответе провайдера: {e}")
+        raise ValueError(f"Неверный формат ответа провайдера: Отсутствует поле {e}")
+
+
+# Преобразование формата провайдера (PayOut | Карта)
+def transform_from_provider_format_card_out(provider_response: Dict[str, Any]) -> OutCardTransactionResponse:
+    try:
+        return OutCardTransactionResponse(
+            id=provider_response["id"],
+            merchant_transaction_id=provider_response["merchant_transaction_id"],
+            expires_at=provider_response["expires_at"],
+            amount=provider_response["amount"],
+            currency=provider_response["currency"],
+            currency_rate=provider_response["currency_rate"],
+            amount_in_usd=provider_response["amount_in_usd"],
+            rate=provider_response["rate"],
+            commission=provider_response["commission"]
         )
     except KeyError as e:
         logger.error(f"Отсутствует ожидаемое поле в ответе провайдера: {e}")

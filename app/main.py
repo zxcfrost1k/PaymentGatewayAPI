@@ -7,8 +7,9 @@ from typing import Dict, List, Optional, Any
 from fastapi import Request
 
 from app.api.services.provider_service import provider_service
-from app.models.card_models.card_transaction_internal_bank_model import InternalCardTransactionRequest
-from app.models.card_models.card_transaction_model import CardTransactionRequest
+from app.models.card_models.in_card_transaction_internal_bank_model import InInternalCardTransactionRequest
+from app.models.card_models.in_card_transaction_model import InCardTransactionRequest
+from app.models.card_models.out_card_transaction_model import OutCardTransactionRequest
 from app.models.other_models import ErrorResponse
 
 
@@ -149,8 +150,8 @@ async def root():
 
 # PayIn | Карта
 @app.post("/api/v1/transactions/card")
-async def create_card_transaction(
-        request: CardTransactionRequest
+async def create_card_transaction_in(
+        request: InCardTransactionRequest
         # token: str = Depends(security)  # Проверка токена авторизации (включить при выходе в прод)
 ):
     try:
@@ -179,7 +180,7 @@ async def create_card_transaction(
         }
 
     except Exception as e:
-        logger.error(f"Error creating transaction: {str(e)}")
+        logger.error(f"Error creating (in) transaction: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_create_error_response(
@@ -191,8 +192,8 @@ async def create_card_transaction(
 
 # PayIn | Карта (внутрибанк)
 @app.post("/api/v1/transactions/internal-card")
-async def create_card_transaction_internal(
-        request: InternalCardTransactionRequest
+async def create_card_transaction_internal_in(
+        request: InInternalCardTransactionRequest
         # token: str = Depends(security)  # Проверка токена авторизации (включить при выходе в прод)
 ):
     try:
@@ -219,7 +220,7 @@ async def create_card_transaction_internal(
         }
 
     except Exception as e:
-        logger.error(f"Error creating transaction: {str(e)}")
+        logger.error(f"Error creating (in) transaction: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_create_error_response(
@@ -231,8 +232,8 @@ async def create_card_transaction_internal(
 
 # PayIn | Карта (трансгран)
 @app.post("/api/v1/transactions/transgran-card")
-async def create_card_transaction_transgran_card(
-        request: CardTransactionRequest
+async def create_card_transaction_transgran_card_in(
+        request: InCardTransactionRequest
         # token: str = Depends(security)  # Проверка токена авторизации (включить при выходе в прод)
 ):
     try:
@@ -260,7 +261,7 @@ async def create_card_transaction_transgran_card(
         }
 
     except Exception as e:
-        logger.error(f"Error creating transaction: {str(e)}")
+        logger.error(f"Error creating (in) transaction: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_create_error_response(
@@ -272,8 +273,8 @@ async def create_card_transaction_transgran_card(
 
 # PayIn | СБП
 @app.post("/api/v1/transactions/sbp")
-async def create_spb_transaction(
-        request: CardTransactionRequest
+async def create_spb_transaction_in(
+        request: InCardTransactionRequest
         # token: str = Depends(security)  # Проверка токена авторизации (включить при выходе в прод)
 ):
     try:
@@ -302,7 +303,7 @@ async def create_spb_transaction(
         }
 
     except Exception as e:
-        logger.error(f"Error creating transaction: {str(e)}")
+        logger.error(f"Error creating (in) transaction: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_create_error_response(
@@ -314,8 +315,8 @@ async def create_spb_transaction(
 
 # PayIn | СБП (внутрибанк)
 @app.post("/api/v1/transactions/internal-sbp")
-async def create_spb_transaction_internal(
-        request: InternalCardTransactionRequest
+async def create_spb_transaction_internal_in(
+        request: InInternalCardTransactionRequest
         # token: str = Depends(security)  # Проверка токена авторизации (включить при выходе в прод)
 ):
     try:
@@ -343,7 +344,7 @@ async def create_spb_transaction_internal(
         }
 
     except Exception as e:
-        logger.error(f"Error creating transaction: {str(e)}")
+        logger.error(f"Error creating (in) transaction: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_create_error_response(
@@ -355,8 +356,8 @@ async def create_spb_transaction_internal(
 
 # PayIn | СБП (трансгран)
 @app.post("/api/v1/transactions/transgran-sbp")
-async def create_spb_transaction_transgran(
-        request: CardTransactionRequest
+async def create_spb_transaction_transgran_in(
+        request: InCardTransactionRequest
         # token: str = Depends(security)  # Проверка токена авторизации (включить при выходе в прод)
 ):
     try:
@@ -384,7 +385,7 @@ async def create_spb_transaction_transgran(
         }
 
     except Exception as e:
-        logger.error(f"Error creating transaction: {str(e)}")
+        logger.error(f"Error creating (in) transaction: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_create_error_response(
@@ -396,8 +397,8 @@ async def create_spb_transaction_transgran(
 
 # PayIn | QR НСПК
 @app.post("/api/v1/transactions/qr")
-async def create_qr_transaction(
-        request: CardTransactionRequest
+async def create_qr_transaction_in(
+        request: InCardTransactionRequest
         # token: str = Depends(security)  # Проверка токена авторизации (включить при выходе в прод)
 ):
     try:
@@ -421,7 +422,7 @@ async def create_qr_transaction(
         }
 
     except Exception as e:
-        logger.error(f"Error creating transaction: {str(e)}")
+        logger.error(f"Error creating (in) transaction: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_create_error_response(
@@ -433,8 +434,8 @@ async def create_qr_transaction(
 
 # PayIn | СИМ-карта
 @app.post("/api/v1/transactions/sim")
-async def create_sim_transaction(
-        request: CardTransactionRequest
+async def create_sim_transaction_in(
+        request: InCardTransactionRequest
         # token: str = Depends(security)  # Проверка токена авторизации (включить при выходе в прод)
 ):
     try:
@@ -460,7 +461,7 @@ async def create_sim_transaction(
         }
 
     except Exception as e:
-        logger.error(f"Error creating transaction: {str(e)}")
+        logger.error(f"Error creating (in) transaction: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_create_error_response(
@@ -521,12 +522,48 @@ async def get_transaction_info(
         return transaction_info
 
     except Exception as e:
-        logger.error(f"Error by get transaction info: {str(e)}")
+        logger.error(f"Error by get (in) transaction info: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_create_error_response(
                 code=str(e).split("\"")[3],
                 message=str(e).split("\"")[-2]
+            )
+        )
+
+
+# PayOut | Карта
+@app.post("/api/v1/transactions/payout-card")
+async def create_card_transaction_out(
+        request: OutCardTransactionRequest
+        # token: str = Depends(security)  # Проверка токена авторизации (включить при выходе в прод)
+):
+    try:
+        logger.info(f"Creating transaction (out): {request.merchant_transaction_id}")
+
+        # Ответ провайдера на запрос (включить при выходе в прод)
+        # result = await provider_service.create_card_transaction(request)
+
+        # Временно возвращаем заглушку вместо вызова провайдера (удалить при выходе в прод)
+        return {
+            "id": 12345,
+            "merchant_transaction_id": request.merchant_transaction_id,
+            "expires_at": "2025-01-20T21:49:41.918607Z",
+            "amount": request.amount,
+            "currency": request.currency,
+            "currency_rate": "103.67",
+            "amount_in_usd": "9.65",
+            "rate": "10",
+            "commission": "0.48",
+        }
+
+    except Exception as e:
+        logger.error(f"Error creating (out) transaction: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_create_error_response(
+                code="500",
+                message="Ошибка при создании вывода"
             )
         )
 

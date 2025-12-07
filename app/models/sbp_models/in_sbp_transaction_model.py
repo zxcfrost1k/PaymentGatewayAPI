@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class SbpTransactionResponse(BaseModel):
+class InSbpTransactionResponse(BaseModel):
     id: int  # Идентификатор платежа (их)
     merchant_transaction_id: str  # Идентификатор платежа (наш)
     expires_at: datetime  # Срок действия платежа
