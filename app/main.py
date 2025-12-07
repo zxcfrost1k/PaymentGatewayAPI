@@ -1,6 +1,6 @@
 # ОСНОВНОЕ ПРИЛОЖЕНИЕ
 import logging
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from typing import Dict, List, Optional, Any
@@ -11,7 +11,7 @@ from app.api.provider_service import provider_service
 from app.models.card_models.card_transaction_internal_bank_model import InternalCardTransactionRequest
 from app.api.auth import security
 from app.models.card_models.card_transaction_model import CardTransactionRequest
-from app.models.other_models import PaginationParams, CancelTransactionErrorResponse
+from app.models.other_models import CancelTransactionErrorResponse
 
 # Настройка логгера
 logging.basicConfig(level=logging.INFO)
@@ -406,18 +406,6 @@ async def create_sim_transaction( # Создание транзакции (СБ�
         )
 
 
-@app.get('/api/v1/transactions')
-async def get_transactions(
-        pagination: PaginationParams = Depends(),
-        token: str = Depends(security)
-):
-    return {
-        'page_size': pagination.page_size,
-        'page_number': pagination.page_number,
-        'transactions': []
-    }
-
-
 @app.post(
     "/transactions/{transaction_id}/cancel",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -428,14 +416,14 @@ async def get_transactions(
         500: {"description": "Internal server error"}
     }
 )
-async def cancel_transaction(
+async def cancel_transaction( # Отмена транзакции
         transaction_id: str,
-        # token: str = Depends(security)
+        # token: str = Depends(security) # Временно отключаем аутентификацию
 ):
     try:
-        success = await provider_service.cancel_transaction(transaction_id)
-        if success:
-            return None  # 204 No Content
+        # Просто вызываем метод, если он выбросит исключение - обработаем в catch
+        await provider_service.cancel_transaction(transaction_id)
+        return None  # 204 No Content
 
     except Exception as e:
         error_message = str(e)
@@ -450,22 +438,33 @@ async def cancel_transaction(
         else:
             # Для других ошибок провайдера
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=CancelTransactionErrorResponse(
-                    code=2,
-                    message=error_message
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=_create_error_response(
+                    code=str(e).split('"')[3],
+                    message=str(e).split('"')[-2]
                 )
             )
 
-    # Если мы здесь, значит что-то пошло не так
-    raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail=CancelTransactionErrorResponse(
-            code=3,
-            message="Internal server error"
-        )
-    )
 
+@app.post("/transactions/{transaction_id}")
+async def get_transaction_info( # Получение информации о транзакции
+        transaction_id: str,
+        # token: str = Depends(security)  # Временно отключаем аутентификацию
+):
+    try:
+        # ДОБАВЬТЕ AWAIT ЗДЕСЬ ↓
+        transaction_info = await provider_service.get_transaction_info(transaction_id)
+        return transaction_info
+
+    except Exception as e:
+        logger.error(f'Error by get transaction info: {str(e)}')
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_create_error_response(
+                code=str(e).split('"')[3],
+                message=str(e).split('"')[-2]
+            )
+        )
 
 if __name__ == '__main__':
     import uvicorn
