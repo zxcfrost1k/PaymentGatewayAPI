@@ -4,6 +4,9 @@ import logging
 import json
 from typing import Dict, Any, Optional, List
 
+from fastapi import UploadFile
+
+from app.api.resources.valid_res import valid_res
 from app.api.tool_for_provider_service.transform_from_provider_format import (
     transform_from_provider_format_card_in,
     transform_from_provider_format_card_internal_in,
@@ -20,6 +23,7 @@ from app.api.tool_for_provider_service.transform_to_provider_format import (
     transform_to_provider_format_card_internal_in,
     transform_to_provider_format_card_out, transform_to_provider_format_sbp_out
 )
+from app.models.appeal_model import AppealCreateResponse, AppealCreateRequest
 from app.models.card_models.in_card_transaction_internal_bank_model import (
     InInternalCardTransactionRequest,
     InInternalCardTransactionResponse
@@ -661,6 +665,76 @@ class ProviderService:
             logger.error(f"Ошибка при получении лимитов: {str(e)}")
             raise transform_provider_error(e)
 
+    # Создание апелляции
+    async def create_appeal(
+            self,
+            request: AppealCreateRequest,
+            files: List[UploadFile]
+    ) -> AppealCreateResponse:
+        try:
+            logger.info(f"Создание апелляции для транзакции {request.transaction_id}")
+
+            # Формируем данные для multipart/form-data
+            form_data = {"amount": request.amount, "transaction_id": request.transaction_id}
+
+            # Создаем multipart данные
+            data = {}
+            files_data = []
+
+            # Добавляем текстовые поля
+            for key, value in form_data.items():
+                data[key] = value
+
+            # Добавляем файлы
+            for i, file in enumerate(files):
+                # Читаем содержимое файла
+                file_content = await file.read()
+
+                # Проверяем размер файла
+                if len(file_content) > settings.max_file_size:
+                    raise Exception(f"Файл {file.filename} превышает максимальный размер: {settings.max_file_size}")
+
+                content_type = file.content_type or "application/octet-stream"
+                if content_type not in valid_res.valid_file_types:
+                    raise Exception(f"Неподдерживаемый тип файла: {content_type}")
+
+                # Добавляем файл в список
+                files_data.append(
+                    ("attachments", (file.filename, file_content, content_type))
+                )
+
+                # Сбрасываем позицию чтения файла
+                await file.seek(0)
+
+            headers = {
+                "Authorization": f"Bearer {settings.provider_api_key}"
+            }
+
+            logger.info(
+                f"Отправка запроса провайдеру на создание апелляции:"
+                f" transaction_id={request.transaction_id},"
+                f" amount={request.amount}")
+
+            if settings.debug:
+                return AppealCreateResponse(id=123)
+
+            # Отправляем запрос с файлами
+            response = await self.client.post(
+                f"{settings.provider_base_url}/api/v1/appeals/",
+                headers=headers,
+                data=data,
+                files=files_data
+            )
+
+            response.raise_for_status()
+            provider_data = response.json()
+            logger.info(f"Получен ответ от провайдера на создание апелляции: {provider_data}")
+
+            return AppealCreateResponse(id=provider_data["id"])
+
+        except Exception as e:
+            logger.error(f"Ошибка при создании апелляции: {str(e)}")
+            raise transform_provider_error(e)
 
     # Выход из приложения
     async def close(self):

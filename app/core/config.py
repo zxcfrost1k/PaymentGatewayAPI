@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     # URL приложения для формирования подписи
     base_webhook_url: str = "http://localhost:8000"
 
+    # Максимальный размер загружаемого файла
+    max_file_size: int = 10 * 1024 * 1024 # (10 Мб)
+    # Максимальное кол-во файлов во влажениях
+    max_files_count: int = 10
 
     class Config:
         env_file = "../set.env"

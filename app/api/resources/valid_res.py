@@ -16,7 +16,7 @@ class ValidRes:
         "canceled"  # отклонена
     ]
 
-    # Поддерживаемые типы файлов для вложений (внести др. при необходимости)
+    # Поддерживаемые типы файлов для вложений
     valid_file_types: List[str] = [
         "image/jpeg",
         "image/jpg",
@@ -27,10 +27,8 @@ class ValidRes:
         "video/mpeg",
         "application/pdf"
     ]
-
-    # Максимальный размер файла (скорректировать при необходимости)
-    max_file_size: int = 10 * 1024 * 1024  # 10 MB
-
+    # Поддерживаемые расширения файлов для вложений
+    valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.mpeg', '.pdf']
 
 # Создание объекта класса ValidRes
 valid_res = ValidRes

@@ -1,7 +1,7 @@
 # ОСНОВНОЕ ПРИЛОЖЕНИЕ
 import logging
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Form, UploadFile, File
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from typing import Dict, List, Optional, Any
@@ -10,6 +10,8 @@ from fastapi import Request
 from app.api.resources.valid_res import valid_res
 from app.api.routers.webhook_router import router as webhook_router
 from app.api.services.provider_service import provider_service
+from app.core.config import settings
+from app.models.appeal_model import AppealCreateResponse, AppealCreateRequest
 from app.models.card_models.in_card_transaction_internal_bank_model import InInternalCardTransactionRequest
 from app.models.card_models.in_card_transaction_model import InCardTransactionRequest
 from app.models.card_models.out_card_transaction_model import OutCardTransactionRequest
@@ -650,6 +652,117 @@ async def get_balance(
             detail=_create_error_response(
                 code="500",
                 message="Ошибка при получении баланса"
+            )
+        )
+
+
+# Создание апелляции
+@app.post("/api/v1/appeals/", response_model=AppealCreateResponse)
+async def create_appeal(
+        transaction_id: str = Form(..., description="Идентификатор транзакции"),
+        amount: str = Form(..., description="Сумма апелляции"),
+        attachments: List[UploadFile] = File(
+            default=[],
+            description="Чеки, доказательства оплаты (изображения, видео, PDF)"
+        ),
+        # token: str = Depends(security)  # Проверка токена авторизации (включить при выходе в прод)
+):
+    try:
+        logger.info(f"Создание апелляции для транзакции {transaction_id}")
+
+        # Валидация входных данных через Pydantic модель
+        try:
+            request = AppealCreateRequest(
+                transaction_id=transaction_id,
+                amount=amount
+            )
+        except Exception as e:
+            logger.error(f"Ошибка валидации данных: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=_create_error_response(
+                    code="422",
+                    message=str(e)
+                )
+            )
+
+        # Валидация файлов
+        if not attachments:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=_create_error_response(
+                    code="400",
+                    message="Необходимо прикрепить хотя бы один файл"
+                )
+            )
+
+        # Ограничение на количество файлов
+        if len(attachments) > settings.max_files_count:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=_create_error_response(
+                    code="422",
+                    message=f"Максимальное количество файлов: {settings.max_files_count}"
+                )
+            )
+
+        for file in attachments:
+            # Проверка MIME-типа
+            content_type = file.content_type or "application/octet-stream"
+            if content_type not in valid_res.valid_file_types:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=_create_error_response(
+                        code="422",
+                        message=f"Неподдерживаемый тип файла:"
+                                f" {content_type}. Разрешены:"
+                                f" {', '.join(valid_res.valid_file_types)}"
+                    )
+                )
+
+            # Проверка расширения файла
+            filename = file.filename.lower()
+            if not any(filename.endswith(ext) for ext in valid_res.valid_extensions):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=_create_error_response(
+                        code="422",
+                        message=f"Неподдерживаемое расширение файла: {filename}"
+                    )
+                )
+
+        # Создание апелляции через провайдера
+        result = await provider_service.create_appeal(request, attachments)
+
+        logger.info(f"Апелляция создана успешно: id={result.id}")
+        return result
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Ошибка при создании апелляции: {str(e)}")
+
+        # Обработка структурированных ошибок от провайдера
+        try:
+            import json
+            error_str = str(e)
+            if error_str.startswith("{") and error_str.endswith("}"):
+                error_detail = json.loads(error_str)
+                if "code" in error_detail and "message" in error_detail:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST
+                        if error_detail["code"].startswith("4")
+                        else status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=error_detail
+                    )
+        except:
+            pass
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_create_error_response(
+                code="500",
+                message="Ошибка при создании апелляции"
             )
         )
 
