@@ -39,15 +39,6 @@ class OutCardTransactionRequest(BaseModel):
         raise ValueError("Неправильный формат поля currency")
 
 
-    @field_validator("owner_name") # Валидация поля owner_name
-    @classmethod
-    def validate_owner_name(csl, value: str) -> str:
-        pattern = r"^[а-яА-ЯёЁ]+ [а-яА-ЯёЁ].[а-яА-ЯёЁ].$"
-        if re.search(pattern, value):
-            return value
-        raise ValueError("Неправильный формат поля owner_name")
-
-
 class OutCardTransactionResponse(BaseModel):
     id: int  # Идентификатор платежа в системе провайдера
     merchant_transaction_id: str  # Идентификатор платежа в системе мерчанта

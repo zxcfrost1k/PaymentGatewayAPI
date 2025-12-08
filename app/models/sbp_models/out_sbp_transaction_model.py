@@ -39,14 +39,6 @@ class OutSbpTransactionRequest(BaseModel):
             return value
         raise ValueError("Неправильный формат поля currency")
 
-    @field_validator("owner_name") # Валидация поля owner_name
-    @classmethod
-    def validate_owner_name(csl, value: str) -> str:
-        pattern = r"^[а-яА-ЯёЁ]+ [а-яА-ЯёЁ].[а-яА-ЯёЁ].$"
-        if re.search(pattern, value):
-            return value
-        raise ValueError("Неправильный формат поля owner_name")
-
     @field_validator("phone_number")  # Валидация поля phone_number
     @classmethod
     def validate_phone_number(csl, value: str) -> str:

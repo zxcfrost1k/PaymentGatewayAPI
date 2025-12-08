@@ -3,10 +3,8 @@ import httpx
 import logging
 import json
 from typing import Dict, Any, Optional, List
-
 from fastapi import UploadFile
 
-from app.api.resources.valid_res import valid_res
 from app.api.tool_for_provider_service.transform_from_provider_format import (
     transform_from_provider_format_card_in,
     transform_from_provider_format_card_internal_in,
@@ -21,9 +19,15 @@ from app.api.tool_for_provider_service.transform_from_provider_format import (
 from app.api.tool_for_provider_service.transform_to_provider_format import (
     transform_to_provider_format_card_in,
     transform_to_provider_format_card_internal_in,
-    transform_to_provider_format_card_out, transform_to_provider_format_sbp_out
+    transform_to_provider_format_card_out,
+    transform_to_provider_format_sbp_out
 )
-from app.models.appeal_model import AppealCreateResponse, AppealCreateRequest
+from app.models.appeal_model import (
+    AppealCreateResponse,
+    AppealCreateRequest,
+    AppealDetailResponse,
+    TransactionRequisite
+)
 from app.models.card_models.in_card_transaction_internal_bank_model import (
     InInternalCardTransactionRequest,
     InInternalCardTransactionResponse
@@ -46,6 +50,8 @@ from app.models.sbp_models.in_sbp_transaction_model import InSbpTransactionRespo
 from app.models.sbp_models.in_sbp_transaction_model_iternal import InInternalSbpTransactionResponse
 from app.models.other_models import InfoTransactionResponse, BalanceResponse, LimitsResponse, LimitItem
 from app.core.config import settings
+from app.api.resources.valid_res import valid_res
+
 
 logger = logging.getLogger(__name__)
 
@@ -227,6 +233,37 @@ def _transform_limits_response(provider_data: dict) -> LimitsResponse:
 
 
 # Обращение к серверу провайдера
+def _transform_appeal_response(provider_data: dict) -> AppealDetailResponse:
+    try:
+        # Преобразуем requisite если есть
+        requisite_data = provider_data.get("transaction_requisite", {})
+        transaction_requisite = TransactionRequisite(
+            bank=requisite_data.get("bank"),
+            card=requisite_data.get("card"),
+            owner=requisite_data.get("owner"),
+            country_name=requisite_data.get("country_name")
+        )
+
+        return AppealDetailResponse(
+            id=provider_data["id"],
+            created_at=provider_data["created_at"],
+            status=provider_data["status"],
+            amount=provider_data["amount"],
+            appeal_cancel_reason_name=provider_data.get("appeal_cancel_reason_name"),
+            transaction_id=provider_data["transaction_id"],
+            merchant_transaction_id=provider_data["merchant_transaction_id"],
+            transaction_created_at=provider_data["transaction_created_at"],
+            transaction_amount=provider_data.get("transaction_amount"),
+            transaction_paid_amount=provider_data["transaction_paid_amount"],
+            transaction_requisite=transaction_requisite,
+            transaction_currency_code=provider_data["transaction_currency_code"]
+        )
+
+    except KeyError as e:
+        logger.error(f"Отсутствует обязательное поле в ответе провайдера: {e}")
+        raise ValueError(f"Неверный формат ответа провайдера: отсутствует поле {e}")
+
+
 class ProviderService:
     def __init__(self):
         self.client = httpx.AsyncClient(
@@ -715,9 +752,6 @@ class ProviderService:
                 f" transaction_id={request.transaction_id},"
                 f" amount={request.amount}")
 
-            if settings.debug:
-                return AppealCreateResponse(id=123)
-
             # Отправляем запрос с файлами
             response = await self.client.post(
                 f"{settings.provider_base_url}/api/v1/appeals/",
@@ -735,6 +769,45 @@ class ProviderService:
         except Exception as e:
             logger.error(f"Ошибка при создании апелляции: {str(e)}")
             raise transform_provider_error(e)
+
+    # Получение информации об апелляции
+    async def get_appeal_info(self, appeal_id: int) -> AppealDetailResponse:
+        try:
+            headers = {
+                "Authorization": f"Bearer {settings.provider_api_key}",
+                "Content-Type": "application/json"
+            }
+
+            logger.info(f"Запрос информации об апелляции {appeal_id}")
+
+            # Реальный запрос к провайдеру
+            response = await self.client.get(
+                f"{settings.provider_base_url}/api/v1/appeals/{appeal_id}",
+                headers=headers
+            )
+
+            if response.status_code == 404:
+                error_response = _create_error_response(
+                    code="404",
+                    message=f"Апелляция {appeal_id} не найдена"
+                )
+                error_message = json.dumps(error_response, ensure_ascii=False)
+                raise Exception(error_message)
+
+            response.raise_for_status()
+            provider_data = response.json()
+            logger.info(f"Получена информация об апелляции {appeal_id}")
+
+            return _transform_appeal_response(provider_data)
+
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP ошибка при запросе апелляции {appeal_id}: {e.response.status_code}")
+            raise transform_provider_error(e)
+        except Exception as e:
+            logger.error(f"Ошибка при получении информации об апелляции {appeal_id}: {str(e)}")
+            raise transform_provider_error(e)
+
+    # Преобразование формата провайдера (Просмотр апелляций)
 
     # Выход из приложения
     async def close(self):

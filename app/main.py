@@ -1,7 +1,7 @@
 # ОСНОВНОЕ ПРИЛОЖЕНИЕ
 import logging
 
-from fastapi import FastAPI, HTTPException, status, Form, UploadFile, File
+from fastapi import FastAPI, HTTPException, status, Form, UploadFile, File, Depends
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from typing import Dict, List, Optional, Any
@@ -9,9 +9,10 @@ from fastapi import Request
 
 from app.api.resources.valid_res import valid_res
 from app.api.routers.webhook_router import router as webhook_router
+from app.api.security.auth import security
 from app.api.services.provider_service import provider_service
 from app.core.config import settings
-from app.models.appeal_model import AppealCreateResponse, AppealCreateRequest
+from app.models.appeal_model import AppealCreateResponse, AppealCreateRequest, AppealDetailResponse
 from app.models.card_models.in_card_transaction_internal_bank_model import InInternalCardTransactionRequest
 from app.models.card_models.in_card_transaction_model import InCardTransactionRequest
 from app.models.card_models.out_card_transaction_model import OutCardTransactionRequest
@@ -836,6 +837,92 @@ async def get_limits(
             detail=_create_error_response(
                 code="500",
                 message="Ошибка при получении лимитов"
+            )
+        )
+
+
+# Просмотр апелляции
+@app.get("/api/v1/appeals/{appeal_id}", response_model=AppealDetailResponse)
+async def get_appeal_info(
+        appeal_id: int,
+        # token: str = Depends(security) # Проверка токена авторизации (включить при выходе в прод)
+):
+    try:
+        logger.info(f"Запрос информации об апелляции {appeal_id}")
+
+        # Валидация ID апелляции
+        if appeal_id <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=_create_error_response(
+                    code="422",
+                    message="ID апелляции должен быть положительным числом"
+                )
+            )
+
+        # Получение информации об апелляции через провайдера
+        appeal_info = await provider_service.get_appeal_info(appeal_id)
+
+        logger.info(f"Информация об апелляции {appeal_id} получена")
+        return appeal_info
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Ошибка при получении информации об апелляции {appeal_id}: {str(e)}")
+
+        # Обработка структурированных ошибок от провайдера
+        try:
+            import json
+            error_str = str(e)
+            if error_str.startswith("{") and error_str.endswith("}"):
+                error_detail = json.loads(error_str)
+                if "code" in error_detail and "message" in error_detail:
+                    code = error_detail["code"]
+                    message = error_detail["message"]
+
+                    if code == "404":
+                        raise HTTPException(
+                            status_code=status.HTTP_404_NOT_FOUND,
+                            detail=_create_error_response(
+                                code="404",
+                                message=message
+                            )
+                        )
+                    elif code.startswith("4"):
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=_create_error_response(
+                                code=code,
+                                message=message
+                            )
+                        )
+                    else:
+                        raise HTTPException(
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=_create_error_response(
+                                code=code,
+                                message=message
+                            )
+                        )
+        except:
+            pass
+
+        # Проверяем, не содержит ли ошибка "не найдена"
+        if "не найдена" in str(e).lower() or "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=_create_error_response(
+                    code="404",
+                    message=f"Апелляция {appeal_id} не найдена"
+                )
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_create_error_response(
+                code="500",
+                message="Ошибка при получении информации об апелляции"
             )
         )
 

@@ -2,6 +2,7 @@
 from typing import Dict, Any
 import logging
 
+from app.models.appeal_model import AppealDetailResponse, TransactionRequisite
 from app.models.card_models.out_card_transaction_model import OutCardTransactionResponse
 from app.models.other_models import InfoTransactionResponse
 from app.models.card_models.in_card_transaction_internal_bank_model import InInternalCardTransactionResponse
