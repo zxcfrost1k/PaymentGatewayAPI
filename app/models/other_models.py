@@ -48,3 +48,20 @@ class WebhookRequest(BaseModel):
     currency_rate: str # Курс валюты
     amount_in_usd: str # Сумма транзакции в USD
     status: str # Статус платежа
+
+
+class BalanceResponse(BaseModel):
+    balance: str
+    currency_rate: str
+
+
+class LimitItem(BaseModel):
+    min_amount: str = Field(..., description="Минимальная сумма")
+    max_amount: str = Field(..., description="Максимальная сумма")
+
+
+class LimitsResponse(BaseModel):
+    card: Optional[LimitItem] = Field(..., description="Лимиты для карточных операций")
+    sbp: Optional[LimitItem] = Field(None, description="Лимиты для СБП операций")
+    qr: Optional[LimitItem] = Field(None, description="Лимиты для QR операций")
+    sim: Optional[LimitItem] = Field(None, description="Лимиты для SIM операций")

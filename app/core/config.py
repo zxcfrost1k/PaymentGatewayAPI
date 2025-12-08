@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     merchant_token: str = "test_token_123"
 
     # Настройки провайдера
-    provider_base_url: str = "https://api.provider.com"
+    provider_base_url: str = "http://localhost:8001"
     provider_api_key: str = "provider_test_key"
 
     debug: bool = True
@@ -21,6 +21,7 @@ class Settings(BaseSettings):
 
     # URL приложения для формирования подписи
     base_webhook_url: str = "http://localhost:8000"
+
 
     class Config:
         env_file = "../set.env"

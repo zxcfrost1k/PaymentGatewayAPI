@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from typing import Dict, List, Optional, Any
 from fastapi import Request
 
+from app.api.resources.valid_res import valid_res
 from app.api.routers.webhook_router import router as webhook_router
 from app.api.services.provider_service import provider_service
 from app.models.card_models.in_card_transaction_internal_bank_model import InInternalCardTransactionRequest
@@ -607,6 +608,121 @@ async def get_transaction_info(
             detail=_create_error_response(
                 code=str(e).split("\"")[3],
                 message=str(e).split("\"")[-2]
+            )
+        )
+
+
+# Получение информации о балансе
+@app.get("/api/v1/balance")
+async def get_balance(
+        # token: str = Depends(security)  # Проверка токена авторизации (включить при выходе в прод)
+):
+    try:
+        logger.info("Запрос баланса")
+
+        # Получение баланса через сервис провайдера
+        balance_info = await provider_service.get_balance()
+
+        logger.info(f"Баланс получен: {balance_info.balance} USD, курс: {balance_info.currency_rate}")
+        return balance_info
+
+    except Exception as e:
+        logger.error(f"Ошибка при получении баланса: {str(e)}")
+
+        # Извлечение структурированной ошибки
+        try:
+            import json
+            error_str = str(e)
+            if error_str.startswith("{") and error_str.endswith("}"):
+                error_detail = json.loads(error_str)
+                if "code" in error_detail and "message" in error_detail:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST
+                        if error_detail["code"].startswith("4")
+                        else status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=error_detail
+                    )
+        except:
+            pass
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_create_error_response(
+                code="500",
+                message="Ошибка при получении баланса"
+            )
+        )
+
+
+# Получение информации о лимитах для указанной валюты
+@app.get("/api/v1/limits/{currency_code}")
+async def get_limits(
+        currency_code: str,
+        # token: str = Depends(security)  # Проверка токена авторизации (включить при выходе в прод)
+):
+    try:
+        logger.info(f"Запрос лимитов для валюты: {currency_code}")
+
+        # Валидация кода валюты
+        if not currency_code or not currency_code.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=_create_error_response(
+                    code="422",
+                    message="Код валюты не может быть пустым"
+                )
+            )
+
+        if currency_code not in valid_res.valid_currency:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=_create_error_response(
+                    code="422",
+                    message="Неподдерживаемый код валюты"
+                )
+            )
+
+        # Получение лимитов через сервис провайдера
+        limits_info = await provider_service.get_limits(currency_code.upper())
+
+        logger.info(f"Лимиты получены для валюты {currency_code}")
+        return limits_info
+
+    except HTTPException as e:
+        raise e
+    except ValueError as e:
+        logger.error(f"Ошибка валидации: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=_create_error_response(
+                code="422",
+                message=str(e)
+            )
+        )
+    except Exception as e:
+        logger.error(f"Ошибка при получении лимитов: {str(e)}")
+
+        # Извлечение структурированной ошибки
+        try:
+            import json
+            error_str = str(e)
+            if error_str.startswith("{") and error_str.endswith("}"):
+                error_detail = json.loads(error_str)
+                if "code" in error_detail and "message" in error_detail:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST
+                        if error_detail["code"].startswith("4")
+                        else status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=error_detail
+                    )
+        except:
+            pass
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_create_error_response(
+                code="500",
+                message="Ошибка при получении лимитов"
             )
         )
 

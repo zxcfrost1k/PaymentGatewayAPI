@@ -9,6 +9,28 @@ class ValidRes:
 
     valid_currency: List[str] = ["RUB"] # Поддержка только RUB
 
+    # Статусы апелляции
+    valid_appeal_statuses: List[str] = [
+        "process",  # в обработке
+        "success",  # одобрена
+        "canceled"  # отклонена
+    ]
+
+    # Поддерживаемые типы файлов для вложений (внести др. при необходимости)
+    valid_file_types: List[str] = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "video/mp4",
+        "video/mpeg",
+        "application/pdf"
+    ]
+
+    # Максимальный размер файла (скорректировать при необходимости)
+    max_file_size: int = 10 * 1024 * 1024  # 10 MB
+
 
 # Создание объекта класса ValidRes
 valid_res = ValidRes
