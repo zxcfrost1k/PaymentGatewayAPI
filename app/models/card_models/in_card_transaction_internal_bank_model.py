@@ -44,13 +44,6 @@ class InInternalCardTransactionRequest(BaseModel):
             return value
         raise ValueError("Неправильный формат поля currency")
 
-    @field_validator("bank_name")  # Валидация поля bank_name
-    @classmethod
-    def validate_bank_name(csl, value: str) -> Optional[str]:
-        if value in valid_res.valid_bank_names:
-            return value
-        raise ValueError("Неправильное значение поля bank_name")
-
     @field_validator("currency_rate")  # Валидация поля currency_rate
     @classmethod
     def validate_currency_rate(csl, value: Optional[str]) -> Optional[str]:
@@ -63,16 +56,6 @@ class InInternalCardTransactionRequest(BaseModel):
                 raise ValueError("Поле currency_rate должно быть положительным числом")
         except (ValueError, InvalidOperation):
             raise ValueError("Неправильный формат поля currency_rate")
-        return value
-
-    @field_validator("client_id")  # Валидация поля client_id
-    @classmethod
-    def validate_client_id(csl, value: str) -> Optional[str]:
-        return value
-
-    @field_validator("merchant_transaction_id")  # Валидация поля merchant_transaction_id
-    @classmethod
-    def validate_transaction_id(csl, value: str) -> Optional[str]:
         return value
 
 

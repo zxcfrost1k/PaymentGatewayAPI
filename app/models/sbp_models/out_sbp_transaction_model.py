@@ -46,15 +46,6 @@ class OutSbpTransactionRequest(BaseModel):
             return value
         raise ValueError("Неправильный формат поля phone_number")
 
-    @field_validator("bank_id") # Валидация поля bank_id
-    @classmethod
-    def validate_bank_id(csl, value: str) -> str:
-        if re.match(r"^\d+$", value):
-            if value in valid_res.valid_bank_numbers:
-                return value
-            raise ValueError("Неверное значение поля bank_id")
-        raise ValueError("Поле bank_id должно содержать только номер")
-
 
 class OutSbpTransactionResponse(BaseModel):
     id: int  # Идентификатор платежа в системе провайдера

@@ -57,16 +57,6 @@ class InCardTransactionRequest(BaseModel):
             raise ValueError("Неправильный формат поля currency_rate")
         return value
 
-    @field_validator("client_id") # Валидация поля client_id
-    @classmethod
-    def validate_client_id(csl, value: str) -> Optional[str]:
-        return value
-
-    @field_validator("merchant_transaction_id") # Валидация поля merchant_transaction_id
-    @classmethod
-    def validate_transaction_id(csl, value: str) -> Optional[str]:
-        return value
-
 
 class InCardTransactionResponse(BaseModel):
     id: int  # Идентификатор платежа в системе провайдера
