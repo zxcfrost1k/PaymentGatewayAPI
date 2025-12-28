@@ -11,7 +11,7 @@ from app.api.security.auth import security
 from app.api.resources.providers_resources import providers_res
 from app.models.paygatecore.pay_in_model import PayInRequest
 from app.models.paygatecore.pay_in_bank_model import PayInBankRequest
-from app.api.routers.paygatecore_router.transaction_webhook_router import router as webhook_router
+from app.api.services.provider_services.garex_service.webhook_router import router as webhook_router
 from app.models.paygatecore.pay_out_model import PayOutRequest, PayOutRequest2
 
 # Настройка логгера

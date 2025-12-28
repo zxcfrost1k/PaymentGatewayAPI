@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     # Провайдеры
     providers: Dict[str, Dict[str, Any]] = {
         "garex": {
-            "base_url": f"https://stage.garex.one/api/merchant/payments/default",
+            "base_url": f"https://stage.garex.one/default",
             "api_key": "provider_test_key"
         }
     }
@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
 
     class Config:
-        env_file = "../set.env"
+        env_file = "set.env"
         case_sensitive = False
 
 

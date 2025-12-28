@@ -1,4 +1,4 @@
-# ПЛАТЕЖИ
+# ПЛАТЕЖНЫЕ РЕСУРСЫ ПРОВАЙДЕРА GAREX
 from typing import List, Dict
 
 
