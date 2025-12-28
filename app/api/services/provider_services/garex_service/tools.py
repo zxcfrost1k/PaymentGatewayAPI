@@ -1,4 +1,4 @@
-# ИНСТРУМЕНТЫ
+# ИНСТРУМЕНТЫ ПРОВАЙДЕРА GAREX
 from datetime import datetime, timedelta
 from fastapi import HTTPException
 from typing import Dict, Any
@@ -22,7 +22,7 @@ from app.models.paygatecore.pay_in_sim_model import PayInSimResponse
 def _get_country(bank_code: str) -> str:
     if bank_code in bank_res.BANKS_RUS:
         return "РФ"
-    elif bank_code in bank_res.BANKS_AZ:
+    elif bank_code in bank_res.BANKS_AZN:
         return "Азербайджан"
     elif bank_code in bank_res.BANKS_ABH:
         return "Абхазия"

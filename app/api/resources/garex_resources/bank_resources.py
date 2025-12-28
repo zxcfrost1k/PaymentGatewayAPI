@@ -1,4 +1,4 @@
-# БАНКОВСКИЕ РЕСУРСЫ
+# БАНКОВСКИЕ РЕСУРСЫ ПРОВАЙДЕРА GAREX
 from typing import Dict
 
 
@@ -78,7 +78,7 @@ class BankResources:
         "Международный банк Таджикистана": "ibt",
         "Банк Эсхата": "eskhata"
     }
-    BANKS_AZ: Dict[str, str] = {
+    BANKS_AZN: Dict[str, str] = {
         "Kapital Bank": "kapitalbank-az",
         "Premium bank": "premiumbank-az",
         "Unibank": "unibank-az",

@@ -4,13 +4,17 @@ from fastapi import HTTPException
 
 from app.api.services.provider_services.garex_service import tools
 from app.core.config import settings
-from app.models.paygatecore.pay_in_bank_model import PayInBankResponse, PayInBankRequest, \
+from app.models.paygatecore.pay_in_bank_model import (
+    PayInBankResponse,
+    PayInBankRequest,
     PayInBankResponse2
+)
 from app.models.paygatecore.pay_in_model import PayInRequest, PayInResponse, PayInResponse2
 from app.api.resources.garex_resources.bank_resources import bank_res
 from app.api.resources.garex_resources.transaction_resources import transactions_res
 from app.models.paygatecore.pay_out_model import PayOutRequest, PayOutResponse, PayOutRequest2
 from app.models.paygatecore.pay_in_sim_model import PayInSimResponse
+
 
 HEADERS = {
         "Authorization": f"Bearer {settings.providers["garex"]["api_key"]}",
@@ -101,7 +105,7 @@ class GarexService:
                 bank_code = bank_res.BANKS_RUS[request.bank_name]
             except KeyError:
                 try:
-                    bank_code = bank_res.BANKS_AZ[request.bank_name]
+                    bank_code = bank_res.BANKS_AZN[request.bank_name]
                 except KeyError:
                     raise HTTPException(
                         status_code=404,

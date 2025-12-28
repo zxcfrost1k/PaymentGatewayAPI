@@ -48,8 +48,8 @@ class JWTBearer(HTTPBearer):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail=_create_error_response(
-                        code="AUTH_ERROR",
-                        message="Unauthorised"
+                        code="401",
+                        message="Отсутствует схема авторизации"
                     )
                 )
 
@@ -59,7 +59,7 @@ class JWTBearer(HTTPBearer):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail=_create_error_response(
-                        code="AUTH_SCHEME_ERROR",
+                        code="401",
                         message="Неверная схема аутентификации"
                     )
                 )
@@ -70,7 +70,7 @@ class JWTBearer(HTTPBearer):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail=_create_error_response(
-                        code="INVALID_TOKEN",
+                        code="401",
                         message="Недействительный токен"
                     )
                 )
@@ -89,7 +89,7 @@ class JWTBearer(HTTPBearer):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=_create_error_response(
-                    code="AUTH_SERVICE_ERROR",
+                    code="401",
                     message="Ошибка службы аутентификации"
                 )
             )
